@@ -2,21 +2,110 @@
 <html lang="pt-br">
 <head>
   <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Constellation</title>
   <style>
-    html, body { margin: 0; height: 100%; font-family: system-ui, sans-serif; background: #0b0f1a; color: #e8ecf5; }
-    #cy { position: absolute; inset: 0 360px 0 0; }
-    #panel { position: absolute; top: 0; right: 0; bottom: 0; width: 360px; overflow: auto;
-             padding: 16px 20px; box-sizing: border-box; background: #121a2b; border-left: 1px solid #223; }
-    #panel h1, #panel h2, #panel h3 { color: #fff; }
-    #panel code { background: #0b0f1a; padding: 1px 4px; border-radius: 4px; }
-    .hint { color: #8b96ad; }
+    :root {
+      --void: #05060d;
+      --starlight: #eaf0ff;
+      --dim: #8a93b8;
+      --glass: rgba(14, 19, 40, 0.72);
+      --c-code-map: #5fb8ff;
+      --c-decision: #ffce6b;
+      --c-gotcha: #ff6b8a;
+      --c-doc: #7de0c4;
+      --ui: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      --mono: ui-monospace, "SF Mono", "Cascadia Code", "Consolas", monospace;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; height: 100%; }
+    #app { position: fixed; inset: 0; background: var(--void); color: var(--starlight); font-family: var(--ui); overflow: hidden; -webkit-font-smoothing: antialiased; }
+    #sky { position: absolute; inset: 0; display: block; cursor: grab; }
+    #sky.dragging { cursor: grabbing; }
+
+    .topbar { position: absolute; top: 0; left: 0; right: 0; display: flex; align-items: flex-start; justify-content: space-between; padding: 20px 24px; gap: 24px; pointer-events: none; background: linear-gradient(to bottom, rgba(5,6,13,0.55), transparent); }
+    .brand h1 { margin: 0; font-size: 15px; font-weight: 600; letter-spacing: 0.42em; text-transform: uppercase; }
+    .brand h1 .mark { color: var(--c-code-map); margin-right: 8px; text-shadow: 0 0 14px var(--c-code-map); }
+    .brand p { margin: 6px 0 0; font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--dim); }
+    .hud { display: flex; flex-direction: column; align-items: flex-end; gap: 10px; }
+    .legend { display: flex; gap: 16px; flex-wrap: wrap; justify-content: flex-end; }
+    .legend .item { display: flex; align-items: center; gap: 7px; font-size: 11px; color: var(--dim); letter-spacing: 0.04em; }
+    .legend .dot { width: 9px; height: 9px; border-radius: 50%; }
+    .telemetry { font-family: var(--mono); font-size: 10.5px; color: var(--dim); letter-spacing: 0.14em; text-transform: uppercase; }
+    .telemetry b { color: var(--starlight); font-weight: 600; }
+    .hint { position: absolute; bottom: 18px; left: 50%; transform: translateX(-50%); font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.16em; text-transform: uppercase; color: rgba(138,147,184,0.6); pointer-events: none; text-align: center; }
+    .empty { position: absolute; inset: 0; display: none; flex-direction: column; align-items: center; justify-content: center; gap: 14px; text-align: center; padding: 24px; }
+    .empty.show { display: flex; }
+    .empty .big { font-size: 40px; color: var(--c-code-map); text-shadow: 0 0 20px var(--c-code-map); }
+    .empty p { color: var(--dim); font-size: 14px; max-width: 460px; line-height: 1.7; }
+    .empty code { font-family: var(--mono); background: rgba(255,255,255,0.06); padding: 2px 7px; border-radius: 6px; color: var(--c-doc); }
+
+    #panel { position: absolute; top: 0; right: 0; bottom: 0; width: min(400px, 88vw); background: var(--glass); backdrop-filter: blur(18px) saturate(1.3); -webkit-backdrop-filter: blur(18px) saturate(1.3); border-left: 1px solid rgba(138,147,184,0.16); box-shadow: -30px 0 80px rgba(0,0,0,0.5); transform: translateX(105%); transition: transform 0.42s cubic-bezier(0.22,0.61,0.36,1); display: flex; flex-direction: column; z-index: 5; }
+    #panel.open { transform: translateX(0); }
+    @media (prefers-reduced-motion: reduce) { #panel { transition: none; } }
+    .panel-head { padding: 26px 26px 18px; border-bottom: 1px solid rgba(138,147,184,0.12); position: relative; }
+    .panel-close { position: absolute; top: 18px; right: 18px; width: 30px; height: 30px; border: none; border-radius: 50%; background: rgba(138,147,184,0.1); color: var(--dim); font-size: 18px; line-height: 1; cursor: pointer; }
+    .panel-close:hover { background: rgba(138,147,184,0.2); color: var(--starlight); }
+    .panel-close:focus-visible { outline: 2px solid var(--c-code-map); outline-offset: 2px; }
+    .panel-eyebrow { font-family: var(--mono); font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--dim); }
+    .panel-title { margin: 10px 0 14px; font-size: 22px; font-weight: 600; line-height: 1.2; padding-right: 30px; }
+    .chips { display: flex; gap: 8px; flex-wrap: wrap; }
+    .chip { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; font-size: 11px; background: rgba(138,147,184,0.1); color: var(--starlight); }
+    .chip .dot { width: 7px; height: 7px; border-radius: 50%; }
+    .chip.galaxy { font-family: var(--mono); text-transform: uppercase; font-size: 10px; letter-spacing: 0.12em; color: var(--dim); }
+    .tags { margin-top: 10px; font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.08em; color: var(--dim); }
+    .panel-body { padding: 22px 26px; overflow-y: auto; flex: 1; font-size: 14.5px; line-height: 1.65; color: #d6ddf2; }
+    .panel-body h1, .panel-body h2, .panel-body h3 { color: var(--starlight); line-height: 1.25; }
+    .panel-body h1 { font-size: 18px; margin: 18px 0 8px; }
+    .panel-body h2 { font-size: 15px; margin: 20px 0 8px; }
+    .panel-body h3 { font-size: 13px; margin: 16px 0 6px; }
+    .panel-body p { margin: 0 0 12px; }
+    .panel-body ul, .panel-body ol { margin: 0 0 12px; padding-left: 18px; }
+    .panel-body li { margin: 3px 0; }
+    .panel-body pre { background: rgba(5,6,13,0.6); padding: 12px 14px; border-radius: 9px; overflow-x: auto; }
+    .panel-body code { font-family: var(--mono); font-size: 12.5px; background: rgba(5,6,13,0.6); padding: 1px 6px; border-radius: 5px; color: var(--c-doc); }
+    .panel-body pre code { background: none; padding: 0; color: #d6ddf2; }
+    .panel-body a { color: var(--c-code-map); }
+    .panel-body .wl { color: var(--c-code-map); border-bottom: 1px dotted rgba(95,184,255,0.5); cursor: pointer; }
+    .panel-links { padding: 16px 26px 26px; border-top: 1px solid rgba(138,147,184,0.12); }
+    .panel-links .lbl { font-family: var(--mono); font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--dim); margin-bottom: 12px; }
+    .link-star { display: flex; align-items: center; gap: 9px; padding: 8px 10px; border-radius: 9px; cursor: pointer; }
+    .link-star:hover { background: rgba(138,147,184,0.1); }
+    .link-star .dot { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+    .link-star .t { font-size: 13px; }
+    .link-star .g { font-family: var(--mono); font-size: 9.5px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--dim); margin-left: auto; }
   </style>
 </head>
 <body>
-  <div id="cy"></div>
-  <div id="panel"><p class="hint">Clique numa estrela para ler.</p></div>
-  <script src="/cytoscape.js"></script>
+  <div id="app">
+    <canvas id="sky"></canvas>
+    <div class="topbar">
+      <div class="brand">
+        <h1><span class="mark">&#10022;</span>Constellation</h1>
+        <p id="brandSub">mapa estelar</p>
+      </div>
+      <div class="hud">
+        <div class="legend" id="legend"></div>
+        <div class="telemetry" id="telemetry"></div>
+      </div>
+    </div>
+    <div class="hint">arraste para navegar &nbsp;&middot;&nbsp; scroll para zoom &nbsp;&middot;&nbsp; clique numa estrela</div>
+    <div class="empty" id="empty">
+      <div class="big">&#10022;</div>
+      <p>Constela&ccedil;&atilde;o vazia. Salve a primeira estrela com<br><code>constellation save --id ... --type ... --title ... --summary ...</code></p>
+    </div>
+    <aside id="panel" aria-hidden="true">
+      <div class="panel-head">
+        <button class="panel-close" id="panelClose" aria-label="Fechar">&times;</button>
+        <div class="panel-eyebrow" id="panelId"></div>
+        <h2 class="panel-title" id="panelTitle"></h2>
+        <div class="chips" id="panelChips"></div>
+        <div class="tags" id="panelTags"></div>
+      </div>
+      <div class="panel-body" id="panelBody"></div>
+      <div class="panel-links" id="panelLinks"></div>
+    </aside>
+  </div>
   <script src="/app.js"></script>
 </body>
 </html>

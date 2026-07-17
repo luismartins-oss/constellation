@@ -35,12 +35,6 @@ describe('viz server', () => {
     expect(html).toContain('texto');
   });
 
-  it('/cytoscape.js serve o bundle vendorizado', async () => {
-    const res = await fetch(`${server.url}/cytoscape.js`);
-    expect(res.status).toBe(200);
-    expect((await res.text()).length).toBeGreaterThan(10000);
-  });
-
   it('/ e /app.js servem os assets estáticos', async () => {
     expect((await fetch(`${server.url}/`)).status).toBe(200);
     expect((await fetch(`${server.url}/app.js`)).status).toBe(200);

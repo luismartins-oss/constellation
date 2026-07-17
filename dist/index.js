@@ -356,7 +356,6 @@ function startServer(root, port) {
       const url = new URL(req.url ?? "/", "http://localhost");
       if (url.pathname === "/") return sendFile(res, path3.join(webDir, "index.html"), "text/html; charset=utf-8");
       if (url.pathname === "/app.js") return sendFile(res, path3.join(webDir, "app.js"), "text/javascript");
-      if (url.pathname === "/cytoscape.js") return sendFile(res, path3.join(webDir, "cytoscape.umd.js"), "text/javascript");
       if (url.pathname === "/data") return sendFile(res, graphPath(root), "application/json");
       if (url.pathname.startsWith("/star/")) {
         const id = decodeURIComponent(url.pathname.slice("/star/".length));
