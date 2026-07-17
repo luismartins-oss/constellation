@@ -777,7 +777,7 @@ git commit -m "feat(core): query textual e list com filtros"
 
 **Interfaces:**
 - Consumes: todo o `core/`.
-- Produces (em `handlers.ts`): `cmdInit(project): void`; `cmdSave(opts): Promise<void>` com `opts = { id; type: StarType; title; summary; constellation?; tags?; links?; updated? }` (corpo lido do **stdin**); `cmdOpen(): void`; `cmdSync(): void`. Também os handlers da Task 7 serão adicionados neste arquivo. `index.ts` registra os comandos no commander.
+- Produces (em `handlers.ts`): `requireRoot(): string` (exportada, usada também pela Task 7); `cmdInit(project): void`; `cmdSave(opts): Promise<void>` com `opts = { id; type: StarType; title; summary; constellation?; tags?; links?; updated? }` (corpo lido do **stdin**); `cmdOpen(): void`; `cmdSync(): void`. `index.ts` registra os comandos no commander.
 
 - [ ] **Step 1: Escrever teste que falha — `test/cli.test.ts`**
 
@@ -835,14 +835,12 @@ Expected: FAIL (handlers/comandos não existem; `open`/`save` desconhecidos).
 ```ts
 import fs from 'node:fs';
 import process from 'node:process';
-import { findRoot, initStore, readAllStars, readStar, writeStar, removeStar } from '../core/store';
+import { findRoot, initStore, writeStar } from '../core/store';
 import { sync } from '../core/build';
 import { indexPath } from '../core/paths';
-import { queryStars, listStars, type QueryFilter } from '../core/query';
-import { resolvedLinks } from '../core/star';
 import type { Star, StarType } from '../core/types';
 
-function requireRoot(): string {
+export function requireRoot(): string {
   const root = findRoot(process.cwd());
   if (!root) {
     console.error('nenhum .constellation encontrado. rode `constellation init <projeto>` primeiro.');
@@ -867,18 +865,6 @@ function readStdin(): Promise<string> {
     process.stdin.on('data', (c) => (data += c));
     process.stdin.on('end', () => resolve(data));
   });
-}
-
-function printStar(s: Star): void {
-  console.log(`# ${s.title}  [${s.id}]`);
-  console.log(`type: ${s.type} · constellation: ${s.constellation} · tags: ${s.tags.join(', ')}`);
-  console.log('');
-  console.log(s.body);
-}
-
-function printSummaries(stars: Star[]): void {
-  if (stars.length === 0) { console.log('(nenhuma estrela)'); return; }
-  for (const s of stars) console.log(`[${s.id}] (${s.type}/${s.constellation}) ${s.summary}`);
 }
 
 export function cmdInit(project: string): void {
@@ -919,39 +905,9 @@ export function cmdSync(): void {
   sync(root);
   console.log('índice e grafo regenerados');
 }
-
-export function cmdShow(id: string, withLinks: boolean): void {
-  const root = requireRoot();
-  const star = readStar(root, id);
-  if (!star) { console.error(`estrela não encontrada: ${id}`); process.exit(1); }
-  printStar(star);
-  if (withLinks) {
-    for (const linkId of resolvedLinks(star)) {
-      const n = readStar(root, linkId);
-      if (n) { console.log('\n---\n'); printStar(n); }
-    }
-  }
-}
-
-export function cmdQuery(term: string, filter: QueryFilter): void {
-  const root = requireRoot();
-  printSummaries(queryStars(readAllStars(root), term, filter));
-}
-
-export function cmdList(filter: QueryFilter): void {
-  const root = requireRoot();
-  printSummaries(listStars(readAllStars(root), filter));
-}
-
-export function cmdRm(id: string): void {
-  const root = requireRoot();
-  if (!removeStar(root, id)) { console.error(`estrela não encontrada: ${id}`); process.exit(1); }
-  sync(root);
-  console.log(`estrela removida: ${id}`);
-}
 ```
 
-> Nota: `cmdShow/cmdQuery/cmdList/cmdRm` já entram aqui (usados na Task 7). O wiring deles é adicionado na Task 7; nesta task registramos só init/save/open/sync.
+> Nota: `requireRoot` é exportada porque os handlers de leitura da Task 7 (adicionados a este mesmo arquivo) também a usam.
 
 - [ ] **Step 4: Substituir `src/cli/index.ts`**
 
@@ -1010,12 +966,13 @@ git commit -m "feat(cli): init, save (stdin), open, sync"
 ### Task 7: CLI — comandos de leitura (show, query, list, rm)
 
 **Files:**
+- Modify: `src/cli/handlers.ts` (adicionar os 4 handlers + helpers de impressão)
 - Modify: `src/cli/index.ts` (registrar os 4 comandos)
 - Test: `test/cli.test.ts` (adicionar casos)
 
 **Interfaces:**
-- Consumes: `cmdShow/cmdQuery/cmdList/cmdRm` (já em `handlers.ts`, Task 6).
-- Produces: comandos `show <id> [--links]`, `query <term> [--type --constellation --tag]`, `list [--type --constellation --tag]`, `rm <id>`.
+- Consumes: `requireRoot` (exportada em `handlers.ts`, Task 6), `readAllStars/readStar/removeStar` (store), `queryStars/listStars/QueryFilter` (query), `resolvedLinks` (star).
+- Produces (em `handlers.ts`): `cmdShow(id, withLinks): void`; `cmdQuery(term, filter: QueryFilter): void`; `cmdList(filter: QueryFilter): void`; `cmdRm(id): void`. E os comandos no commander: `show <id> [--links]`, `query <term> [--type --constellation --tag]`, `list [--type --constellation --tag]`, `rm <id>`.
 
 - [ ] **Step 1: Adicionar testes que falham em `test/cli.test.ts`**
 
@@ -1046,9 +1003,67 @@ describe('cli leitura', () => {
 Run: `npm run build && npx vitest run test/cli.test.ts`
 Expected: FAIL (comandos `show/query/list/rm` desconhecidos).
 
-- [ ] **Step 3: Registrar os comandos em `src/cli/index.ts`**
+- [ ] **Step 3: Adicionar os handlers de leitura em `src/cli/handlers.ts`**
 
-Adicionar o import e os `program.command(...)` antes de `program.parseAsync();`:
+Adicionar estes imports ao topo do arquivo (junto aos já existentes):
+
+```ts
+import { readAllStars, readStar, removeStar } from '../core/store';
+import { queryStars, listStars, type QueryFilter } from '../core/query';
+import { resolvedLinks } from '../core/star';
+```
+
+Adicionar os helpers de impressão e os 4 handlers ao final do arquivo:
+
+```ts
+function printStar(s: Star): void {
+  console.log(`# ${s.title}  [${s.id}]`);
+  console.log(`type: ${s.type} · constellation: ${s.constellation} · tags: ${s.tags.join(', ')}`);
+  console.log('');
+  console.log(s.body);
+}
+
+function printSummaries(stars: Star[]): void {
+  if (stars.length === 0) { console.log('(nenhuma estrela)'); return; }
+  for (const s of stars) console.log(`[${s.id}] (${s.type}/${s.constellation}) ${s.summary}`);
+}
+
+export function cmdShow(id: string, withLinks: boolean): void {
+  const root = requireRoot();
+  const star = readStar(root, id);
+  if (!star) { console.error(`estrela não encontrada: ${id}`); process.exit(1); }
+  printStar(star);
+  if (withLinks) {
+    for (const linkId of resolvedLinks(star)) {
+      const n = readStar(root, linkId);
+      if (n) { console.log('\n---\n'); printStar(n); }
+    }
+  }
+}
+
+export function cmdQuery(term: string, filter: QueryFilter): void {
+  const root = requireRoot();
+  printSummaries(queryStars(readAllStars(root), term, filter));
+}
+
+export function cmdList(filter: QueryFilter): void {
+  const root = requireRoot();
+  printSummaries(listStars(readAllStars(root), filter));
+}
+
+export function cmdRm(id: string): void {
+  const root = requireRoot();
+  if (!removeStar(root, id)) { console.error(`estrela não encontrada: ${id}`); process.exit(1); }
+  sync(root);
+  console.log(`estrela removida: ${id}`);
+}
+```
+
+> Nota (TS): como `star` no `cmdShow` é estreitado após o `process.exit(1)`, mantenha o `if (!star)` exatamente como acima — `process.exit` tem tipo `never`, então o compilador entende que abaixo do `if` `star` não é nulo.
+
+- [ ] **Step 4: Registrar os comandos em `src/cli/index.ts`**
+
+Trocar o import dos handlers e adicionar os `program.command(...)` antes de `program.parseAsync();`:
 
 ```ts
 import { cmdInit, cmdSave, cmdOpen, cmdSync, cmdShow, cmdQuery, cmdList, cmdRm } from './handlers';
@@ -1078,12 +1093,12 @@ program.command('rm')
   .action(cmdRm);
 ```
 
-- [ ] **Step 4: Buildar e rodar**
+- [ ] **Step 5: Buildar e rodar**
 
 Run: `npm run build && npx vitest run test/cli.test.ts`
 Expected: PASS (todos os casos, incluindo os novos).
 
-- [ ] **Step 5: Commit**
+- [ ] **Step 6: Commit**
 
 ```bash
 git add -A
