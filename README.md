@@ -6,10 +6,19 @@ conteúdo sob demanda (economia de token) e visualiza tudo como um grafo.
 
 ## Instalação
 
+Direto do GitHub (o `npm install` builda sozinho via script `prepare`):
+
 ```bash
-npm install -g constellation
-# ou, sem instalar:
-npx constellation <comando>
+npm install -g github:luismartins-oss/constellation
+```
+
+Ou para desenvolver localmente:
+
+```bash
+git clone https://github.com/luismartins-oss/constellation.git
+cd constellation
+npm install   # builda via 'prepare'
+npm link      # cria o comando global 'constellation'
 ```
 
 ## Uso

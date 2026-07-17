@@ -8,6 +8,7 @@
   "engines": { "node": ">=18" },
   "scripts": {
     "build": "tsup && node scripts/copy-assets.mjs",
+    "prepare": "npm run build",
     "dev": "tsx src/cli/index.ts",
     "typecheck": "tsc --noEmit",
     "test": "vitest run"
