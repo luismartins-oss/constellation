@@ -1192,6 +1192,17 @@ describe('viz server', () => {
     expect(html).toContain('<h2');
     expect(html).toContain('texto');
   });
+
+  it('/cytoscape.js serve o bundle do node_modules', async () => {
+    const res = await fetch(`${server.url}/cytoscape.js`);
+    expect(res.status).toBe(200);
+    expect((await res.text()).length).toBeGreaterThan(10000);
+  });
+
+  it('/ e /app.js servem os assets estáticos', async () => {
+    expect((await fetch(`${server.url}/`)).status).toBe(200);
+    expect((await fetch(`${server.url}/app.js`)).status).toBe(200);
+  });
 });
 ```
 
@@ -1218,8 +1229,10 @@ const require = createRequire(import.meta.url);
 const dirname = path.dirname(fileURLToPath(import.meta.url));
 
 function cytoscapePath(): string {
-  const pkg = require.resolve('cytoscape/package.json');
-  return path.join(path.dirname(pkg), 'dist', 'cytoscape.umd.js');
+  // cytoscape 3.x tem "exports" que bloqueia require.resolve('cytoscape/package.json');
+  // resolvemos o entry principal (sempre exportado) e pegamos o umd irmão no dist/.
+  const main = require.resolve('cytoscape');
+  return path.join(path.dirname(main), 'cytoscape.umd.js');
 }
 
 function sendFile(res: http.ServerResponse, file: string, type: string): void {
@@ -1233,21 +1246,27 @@ function sendFile(res: http.ServerResponse, file: string, type: string): void {
 export function startServer(root: string, port: number): Promise<{ url: string; close: () => void }> {
   const webDir = path.join(dirname, 'web');
   const server = http.createServer(async (req, res) => {
-    const url = new URL(req.url ?? '/', 'http://localhost');
-    if (url.pathname === '/') return sendFile(res, path.join(webDir, 'index.html'), 'text/html; charset=utf-8');
-    if (url.pathname === '/app.js') return sendFile(res, path.join(webDir, 'app.js'), 'text/javascript');
-    if (url.pathname === '/cytoscape.js') return sendFile(res, cytoscapePath(), 'text/javascript');
-    if (url.pathname === '/data') return sendFile(res, graphPath(root), 'application/json');
-    if (url.pathname.startsWith('/star/')) {
-      const id = decodeURIComponent(url.pathname.slice('/star/'.length));
-      const star = readStar(root, id);
-      if (!star) { res.statusCode = 404; res.end('não encontrada'); return; }
-      res.setHeader('Content-Type', 'text/html; charset=utf-8');
-      res.end(await marked.parse(star.body));
-      return;
+    try {
+      const url = new URL(req.url ?? '/', 'http://localhost');
+      if (url.pathname === '/') return sendFile(res, path.join(webDir, 'index.html'), 'text/html; charset=utf-8');
+      if (url.pathname === '/app.js') return sendFile(res, path.join(webDir, 'app.js'), 'text/javascript');
+      if (url.pathname === '/cytoscape.js') return sendFile(res, cytoscapePath(), 'text/javascript');
+      if (url.pathname === '/data') return sendFile(res, graphPath(root), 'application/json');
+      if (url.pathname.startsWith('/star/')) {
+        const id = decodeURIComponent(url.pathname.slice('/star/'.length));
+        const star = readStar(root, id);
+        if (!star) { res.statusCode = 404; res.end('não encontrada'); return; }
+        res.setHeader('Content-Type', 'text/html; charset=utf-8');
+        res.end(await marked.parse(star.body));
+        return;
+      }
+      res.statusCode = 404;
+      res.end('não encontrado');
+    } catch (err) {
+      // um erro num handler não deve derrubar o processo do server
+      res.statusCode = 500;
+      res.end(`erro interno: ${(err as Error).message}`);
     }
-    res.statusCode = 404;
-    res.end('não encontrado');
   });
   return new Promise((resolve) => {
     server.listen(port, () => {
