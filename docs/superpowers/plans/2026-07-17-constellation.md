@@ -416,7 +416,7 @@ git commit -m "feat(core): tipos, paths e parse/serialize de estrela"
 - [ ] **Step 1: Escrever teste que falha — `test/store.test.ts`**
 
 ```ts
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -465,6 +465,27 @@ describe('store', () => {
     fs.mkdirSync(sub, { recursive: true });
     expect(findRoot(sub)).toBe(root);
     expect(findRoot(os.tmpdir())).not.toBe(root);
+  });
+
+  it('writeStar re-tipando um id não deixa duplicata', () => {
+    const root = initStore(tmp, 'p');
+    writeStar(root, star({ id: 'x', type: 'decision' }));
+    writeStar(root, star({ id: 'x', type: 'gotcha' }));
+    expect(readAllStars(root).filter((s) => s.id === 'x')).toHaveLength(1);
+    expect(readStar(root, 'x')?.type).toBe('gotcha');
+    expect(removeStar(root, 'x')).toBe(true);
+    expect(readStar(root, 'x')).toBeNull();
+  });
+
+  it('readAllStars ignora arquivo malformado e ainda lê os válidos', () => {
+    const root = initStore(tmp, 'p');
+    writeStar(root, star({ id: 'ok' }));
+    fs.writeFileSync(path.join(root, 'stars', 'decisions', 'ruim.md'), '---\nsem_id: true\n---\ncorpo');
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    expect(() => readStar(root, 'ok')).not.toThrow();
+    expect(readStar(root, 'ok')?.id).toBe('ok');
+    expect(warn).toHaveBeenCalled();
+    warn.mockRestore();
   });
 });
 ```
@@ -515,7 +536,13 @@ export function readAllStars(root: string): Star[] {
     if (!fs.existsSync(dir)) continue;
     for (const f of fs.readdirSync(dir)) {
       if (!f.endsWith('.md')) continue;
-      stars.push(parseStar(fs.readFileSync(path.join(dir, f), 'utf8')));
+      const file = path.join(dir, f);
+      try {
+        stars.push(parseStar(fs.readFileSync(file, 'utf8')));
+      } catch (err) {
+        // um .md malformado (ex: hand-edit) não deve quebrar a leitura dos válidos
+        console.warn(`constellation: ignorando estrela inválida ${file}: ${(err as Error).message}`);
+      }
     }
   }
   stars.sort((a, b) => a.id.localeCompare(b.id));
@@ -527,6 +554,11 @@ export function readStar(root: string, id: string): Star | null {
 }
 
 export function writeStar(root: string, star: Star): void {
+  // garante 1 arquivo por id: remove versão anterior noutro tipo, se houver
+  for (const t of ALL_TYPES) {
+    const p = starFilePath(root, t, star.id);
+    if (t !== star.type && fs.existsSync(p)) fs.rmSync(p);
+  }
   fs.writeFileSync(starFilePath(root, star.type, star.id), serializeStar(star));
 }
 
