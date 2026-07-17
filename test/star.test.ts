@@ -21,6 +21,7 @@ describe('star', () => {
     expect(s.type).toBe('code-map');
     expect(s.tags).toEqual(['backend', 'aportes']);
     expect(s.body).toContain('[[diagrama-posicao]]');
+    expect(s.updated).toBe('2026-07-17'); // Date do YAML normalizado p/ ISO
   });
 
   it('extrai wikilinks do corpo', () => {
