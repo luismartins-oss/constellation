@@ -151,6 +151,7 @@ if (existsSync('src/viz/web')) {
 ```
 node_modules/
 dist/
+.superpowers/
 ```
 
 - [ ] **Step 6: Criar stub `src/cli/index.ts`**
