@@ -2,11 +2,11 @@ import fs from 'node:fs';
 import process from 'node:process';
 import { findRoot, initStore, writeStar } from '../core/store';
 import { sync } from '../core/build';
-import { indexPath } from '../core/paths';
+import { indexPath, ALL_TYPES } from '../core/paths';
 import type { Star, StarType } from '../core/types';
 import { readAllStars, readStar, removeStar } from '../core/store';
 import { queryStars, listStars, type QueryFilter } from '../core/query';
-import { resolvedLinks } from '../core/star';
+import { resolvedLinks, ID_RE } from '../core/star';
 
 export function requireRoot(): string {
   const root = findRoot(process.cwd());
@@ -49,6 +49,14 @@ export async function cmdSave(opts: {
   id: string; type: StarType; title: string; summary: string;
   constellation?: string; tags?: string; links?: string; updated?: string;
 }): Promise<void> {
+  if (!ID_RE.test(opts.id)) {
+    console.error(`id inválido: "${opts.id}" — use apenas minúsculas, números e hífens (ex: backend-aportes).`);
+    process.exit(1);
+  }
+  if (!ALL_TYPES.includes(opts.type)) {
+    console.error(`type inválido: "${opts.type}" — use um de: ${ALL_TYPES.join(', ')}.`);
+    process.exit(1);
+  }
   const root = requireRoot();
   const body = await readStdin();
   const star: Star = {

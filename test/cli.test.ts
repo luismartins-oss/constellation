@@ -56,4 +56,15 @@ describe('cli leitura', () => {
     run(['rm', 'a']);
     expect(run(['list'])).not.toContain('[a]');
   });
+
+  it('save rejeita id inválido (path traversal) sem gravar nada', () => {
+    run(['init', 'proj']);
+    expect(() => run(['save', '--id', '../../pwned', '--type', 'doc', '--title', 'T', '--summary', 's'], 'x')).toThrow();
+    expect(run(['list'])).toContain('(nenhuma estrela)');
+  });
+
+  it('save rejeita type inválido', () => {
+    run(['init', 'proj']);
+    expect(() => run(['save', '--id', 'ok', '--type', 'banana', '--title', 'T', '--summary', 's'], 'x')).toThrow();
+  });
 });

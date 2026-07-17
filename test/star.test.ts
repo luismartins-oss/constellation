@@ -42,4 +42,9 @@ describe('star', () => {
   it('rejeita type inválido', () => {
     expect(() => parseStar('---\nid: x\ntype: banana\n---\ncorpo')).toThrow();
   });
+
+  it('rejeita id com caracteres inválidos (barra/traversal/maiúscula)', () => {
+    expect(() => parseStar('---\nid: ../evil\ntype: doc\n---\ncorpo')).toThrow();
+    expect(() => parseStar('---\nid: NaoPode\ntype: doc\n---\ncorpo')).toThrow();
+  });
 });

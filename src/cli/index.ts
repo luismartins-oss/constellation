@@ -60,4 +60,7 @@ program.command('view')
   .option('--port <port>', 'porta', '4747')
   .action((opts) => cmdView(Number(opts.port)));
 
-program.parseAsync();
+program.parseAsync().catch((err) => {
+  console.error(`erro: ${err instanceof Error ? err.message : String(err)}`);
+  process.exit(1);
+});
