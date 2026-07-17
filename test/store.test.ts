@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -47,5 +47,26 @@ describe('store', () => {
     fs.mkdirSync(sub, { recursive: true });
     expect(findRoot(sub)).toBe(root);
     expect(findRoot(os.tmpdir())).not.toBe(root);
+  });
+
+  it('writeStar re-tipando um id não deixa duplicata', () => {
+    const root = initStore(tmp, 'p');
+    writeStar(root, star({ id: 'x', type: 'decision' }));
+    writeStar(root, star({ id: 'x', type: 'gotcha' }));
+    expect(readAllStars(root).filter((s) => s.id === 'x')).toHaveLength(1);
+    expect(readStar(root, 'x')?.type).toBe('gotcha');
+    expect(removeStar(root, 'x')).toBe(true);
+    expect(readStar(root, 'x')).toBeNull();
+  });
+
+  it('readAllStars ignora arquivo malformado e ainda lê os válidos', () => {
+    const root = initStore(tmp, 'p');
+    writeStar(root, star({ id: 'ok' }));
+    fs.writeFileSync(path.join(root, 'stars', 'decisions', 'ruim.md'), '---\nsem_id: true\n---\ncorpo');
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    expect(() => readStar(root, 'ok')).not.toThrow();
+    expect(readStar(root, 'ok')?.id).toBe('ok');
+    expect(warn).toHaveBeenCalled();
+    warn.mockRestore();
   });
 });

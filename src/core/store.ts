@@ -36,7 +36,13 @@ export function readAllStars(root: string): Star[] {
     if (!fs.existsSync(dir)) continue;
     for (const f of fs.readdirSync(dir)) {
       if (!f.endsWith('.md')) continue;
-      stars.push(parseStar(fs.readFileSync(path.join(dir, f), 'utf8')));
+      const file = path.join(dir, f);
+      try {
+        stars.push(parseStar(fs.readFileSync(file, 'utf8')));
+      } catch (err) {
+        // um .md malformado (ex: hand-edit) não deve quebrar a leitura dos válidos
+        console.warn(`constellation: ignorando estrela inválida ${file}: ${(err as Error).message}`);
+      }
     }
   }
   stars.sort((a, b) => a.id.localeCompare(b.id));
@@ -48,6 +54,11 @@ export function readStar(root: string, id: string): Star | null {
 }
 
 export function writeStar(root: string, star: Star): void {
+  // garante 1 arquivo por id: remove versão anterior noutro tipo, se houver
+  for (const t of ALL_TYPES) {
+    const p = starFilePath(root, t, star.id);
+    if (t !== star.type && fs.existsSync(p)) fs.rmSync(p);
+  }
   fs.writeFileSync(starFilePath(root, star.type, star.id), serializeStar(star));
 }
 
