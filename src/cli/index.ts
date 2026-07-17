@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { Command } from 'commander';
-import { cmdInit, cmdSave, cmdOpen, cmdSync } from './handlers';
+import { cmdInit, cmdSave, cmdOpen, cmdSync, cmdShow, cmdQuery, cmdList, cmdRm } from './handlers';
 
 const program = new Command();
 program
@@ -31,5 +31,27 @@ program.command('open')
 program.command('sync')
   .description('regenera index.md e constellation.json')
   .action(cmdSync);
+
+program.command('show')
+  .argument('<id>')
+  .option('--links', 'incluir estrelas vizinhas')
+  .action((id, opts) => cmdShow(id, Boolean(opts.links)));
+
+program.command('query')
+  .argument('<term>')
+  .option('--type <type>')
+  .option('--constellation <cluster>')
+  .option('--tag <tag>')
+  .action((term, opts) => cmdQuery(term, opts));
+
+program.command('list')
+  .option('--type <type>')
+  .option('--constellation <cluster>')
+  .option('--tag <tag>')
+  .action((opts) => cmdList(opts));
+
+program.command('rm')
+  .argument('<id>')
+  .action(cmdRm);
 
 program.parseAsync();

@@ -37,3 +37,23 @@ describe('cli básico', () => {
     expect(out).toContain('- [a] (gotcha) cuidado com X');
   });
 });
+
+describe('cli leitura', () => {
+  it('show devolve o corpo; query e list acham; rm remove', () => {
+    run(['init', 'proj']);
+    run(['save', '--id', 'a', '--type', 'decision', '--title', 'Dec A',
+         '--summary', 'usar id_in', '--constellation', 'db', '--links', 'b'],
+        'Corpo com [[b]].');
+    run(['save', '--id', 'b', '--type', 'gotcha', '--title', 'Gotcha B',
+         '--summary', 'cuidado', '--constellation', 'db'], 'binds do asyncpg');
+
+    expect(run(['show', 'a'])).toContain('Corpo com [[b]].');
+    expect(run(['show', 'a', '--links'])).toContain('Gotcha B');
+    expect(run(['query', 'asyncpg'])).toContain('[b]');
+    expect(run(['list', '--type', 'decision'])).toContain('[a]');
+    expect(run(['list', '--type', 'decision'])).not.toContain('[b]');
+
+    run(['rm', 'a']);
+    expect(run(['list'])).not.toContain('[a]');
+  });
+});

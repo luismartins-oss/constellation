@@ -4,6 +4,9 @@ import { findRoot, initStore, writeStar } from '../core/store';
 import { sync } from '../core/build';
 import { indexPath } from '../core/paths';
 import type { Star, StarType } from '../core/types';
+import { readAllStars, readStar, removeStar } from '../core/store';
+import { queryStars, listStars, type QueryFilter } from '../core/query';
+import { resolvedLinks } from '../core/star';
 
 export function requireRoot(): string {
   const root = findRoot(process.cwd());
@@ -69,4 +72,46 @@ export function cmdSync(): void {
   const root = requireRoot();
   sync(root);
   console.log('índice e grafo regenerados');
+}
+
+function printStar(s: Star): void {
+  console.log(`# ${s.title}  [${s.id}]`);
+  console.log(`type: ${s.type} · constellation: ${s.constellation} · tags: ${s.tags.join(', ')}`);
+  console.log('');
+  console.log(s.body);
+}
+
+function printSummaries(stars: Star[]): void {
+  if (stars.length === 0) { console.log('(nenhuma estrela)'); return; }
+  for (const s of stars) console.log(`[${s.id}] (${s.type}/${s.constellation}) ${s.summary}`);
+}
+
+export function cmdShow(id: string, withLinks: boolean): void {
+  const root = requireRoot();
+  const star = readStar(root, id);
+  if (!star) { console.error(`estrela não encontrada: ${id}`); process.exit(1); }
+  printStar(star);
+  if (withLinks) {
+    for (const linkId of resolvedLinks(star)) {
+      const n = readStar(root, linkId);
+      if (n) { console.log('\n---\n'); printStar(n); }
+    }
+  }
+}
+
+export function cmdQuery(term: string, filter: QueryFilter): void {
+  const root = requireRoot();
+  printSummaries(queryStars(readAllStars(root), term, filter));
+}
+
+export function cmdList(filter: QueryFilter): void {
+  const root = requireRoot();
+  printSummaries(listStars(readAllStars(root), filter));
+}
+
+export function cmdRm(id: string): void {
+  const root = requireRoot();
+  if (!removeStar(root, id)) { console.error(`estrela não encontrada: ${id}`); process.exit(1); }
+  sync(root);
+  console.log(`estrela removida: ${id}`);
 }
