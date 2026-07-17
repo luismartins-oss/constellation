@@ -1,16 +1,40 @@
 {
-  "name": "constellation",
+  "name": "@luismartins-oss/constellation",
   "version": "0.1.0",
-  "description": "Contexto de projeto para agentes de IA — estrelas versionadas, índice barato, grafo navegável",
+  "description": "Contexto de projeto para agentes de IA — estrelas versionadas, índice barato, grafo estelar navegável",
   "type": "module",
   "bin": { "constellation": "dist/index.js" },
   "files": ["dist"],
   "engines": { "node": ">=18" },
+  "license": "MIT",
+  "author": "luismartins-oss",
+  "keywords": [
+    "ai",
+    "agents",
+    "context",
+    "knowledge-graph",
+    "memory",
+    "cli",
+    "llm",
+    "claude"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/luismartins-oss/constellation.git"
+  },
+  "homepage": "https://github.com/luismartins-oss/constellation#readme",
+  "bugs": {
+    "url": "https://github.com/luismartins-oss/constellation/issues"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "tsup && node scripts/copy-assets.mjs",
     "dev": "tsx src/cli/index.ts",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "prepublishOnly": "npm run build"
   },
   "dependencies": {
     "commander": "^12.0.0",
