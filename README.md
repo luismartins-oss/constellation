@@ -9,7 +9,7 @@ conteúdo sob demanda (economia de token) e visualiza tudo como um grafo.
 Via npm:
 
 ```bash
-npm install -g @luismartins-oss/constellation
+npm install -g @luismartinsoss/constellation
 ```
 
 Ou direto do GitHub (já vem com o `dist/` buildado, sem build no cliente):
