@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import { Command } from 'commander';
 import { cmdInit, cmdSave, cmdOpen, cmdSync, cmdShow, cmdQuery, cmdList, cmdRm } from './handlers';
+import { cmdView } from './view';
 
 const program = new Command();
 program
@@ -53,5 +54,10 @@ program.command('list')
 program.command('rm')
   .argument('<id>')
   .action(cmdRm);
+
+program.command('view')
+  .description('abre o grafo no browser')
+  .option('--port <port>', 'porta', '4747')
+  .action((opts) => cmdView(Number(opts.port)));
 
 program.parseAsync();
