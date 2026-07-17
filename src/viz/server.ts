@@ -1,21 +1,12 @@
 import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
-import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
 import { marked } from 'marked';
 import { graphPath } from '../core/paths';
 import { readStar } from '../core/store';
 
-const require = createRequire(import.meta.url);
 const dirname = path.dirname(fileURLToPath(import.meta.url));
-
-function cytoscapePath(): string {
-  // cytoscape 3.x tem "exports" que bloqueia require.resolve('cytoscape/package.json');
-  // resolvemos o entry principal (sempre exportado) e pegamos o umd irmão no dist/.
-  const main = require.resolve('cytoscape');
-  return path.join(path.dirname(main), 'cytoscape.umd.js');
-}
 
 function sendFile(res: http.ServerResponse, file: string, type: string): void {
   fs.readFile(file, (err, buf) => {
@@ -32,7 +23,7 @@ export function startServer(root: string, port: number): Promise<{ url: string; 
       const url = new URL(req.url ?? '/', 'http://localhost');
       if (url.pathname === '/') return sendFile(res, path.join(webDir, 'index.html'), 'text/html; charset=utf-8');
       if (url.pathname === '/app.js') return sendFile(res, path.join(webDir, 'app.js'), 'text/javascript');
-      if (url.pathname === '/cytoscape.js') return sendFile(res, cytoscapePath(), 'text/javascript');
+      if (url.pathname === '/cytoscape.js') return sendFile(res, path.join(webDir, 'cytoscape.umd.js'), 'text/javascript');
       if (url.pathname === '/data') return sendFile(res, graphPath(root), 'application/json');
       if (url.pathname.startsWith('/star/')) {
         const id = decodeURIComponent(url.pathname.slice('/star/'.length));

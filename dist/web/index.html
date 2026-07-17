@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8" />
+  <title>Constellation</title>
+  <style>
+    html, body { margin: 0; height: 100%; font-family: system-ui, sans-serif; background: #0b0f1a; color: #e8ecf5; }
+    #cy { position: absolute; inset: 0 360px 0 0; }
+    #panel { position: absolute; top: 0; right: 0; bottom: 0; width: 360px; overflow: auto;
+             padding: 16px 20px; box-sizing: border-box; background: #121a2b; border-left: 1px solid #223; }
+    #panel h1, #panel h2, #panel h3 { color: #fff; }
+    #panel code { background: #0b0f1a; padding: 1px 4px; border-radius: 4px; }
+    .hint { color: #8b96ad; }
+  </style>
+</head>
+<body>
+  <div id="cy"></div>
+  <div id="panel"><p class="hint">Clique numa estrela para ler.</p></div>
+  <script src="/cytoscape.js"></script>
+  <script src="/app.js"></script>
+</body>
+</html>
