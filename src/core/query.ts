@@ -21,7 +21,7 @@ export function queryStars(stars: Star[], term: string, filter: QueryFilter = {}
   const q = term.toLowerCase();
   return stars.filter((s) => {
     if (!matchesFilter(s, filter)) return false;
-    const hay = [s.id, s.title, s.summary, s.body, s.tags.join(' ')].join('\n').toLowerCase();
+    const hay = [s.id, s.title, s.summary, s.body, s.tags.join(' '), s.files.join(' '), s.refs.join(' ')].join('\n').toLowerCase();
     return hay.includes(q);
   });
 }

@@ -47,4 +47,18 @@ describe('star', () => {
     expect(() => parseStar('---\nid: ../evil\ntype: doc\n---\ncorpo')).toThrow();
     expect(() => parseStar('---\nid: NaoPode\ntype: doc\n---\ncorpo')).toThrow();
   });
+
+  it('faz parse de files e refs (dossiê estruturado) e round-trip preserva', () => {
+    const raw = '---\nid: dossie\ntype: gotcha\nfiles: [app/x.py, app/y.py]\nrefs: [ticket-42]\n---\ncorpo';
+    const s = parseStar(raw);
+    expect(s.files).toEqual(['app/x.py', 'app/y.py']);
+    expect(s.refs).toEqual(['ticket-42']);
+    expect(parseStar(serializeStar(s))).toEqual(s);
+  });
+
+  it('files/refs ausentes viram arrays vazios', () => {
+    const s = parseStar('---\nid: vazio\ntype: doc\n---\ncorpo');
+    expect(s.files).toEqual([]);
+    expect(s.refs).toEqual([]);
+  });
 });

@@ -5,7 +5,7 @@ import type { Star } from '../src/core/types';
 function star(over: Partial<Star>): Star {
   return {
     id: 'x', type: 'decision', constellation: 'geral',
-    title: 'X', summary: 'sX', tags: [], links: [], updated: '', body: '', ...over,
+    title: 'X', summary: 'sX', tags: [], links: [], files: [], refs: [], updated: '', body: '', ...over,
   };
 }
 

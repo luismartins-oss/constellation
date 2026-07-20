@@ -22,6 +22,8 @@ program.command('save')
   .option('--constellation <cluster>')
   .option('--tags <list>', 'separadas por vírgula')
   .option('--links <list>', 'ids separados por vírgula')
+  .option('--files <list>', 'arquivos/caminhos relevantes, separados por vírgula')
+  .option('--refs <list>', 'referências (links/tickets), separadas por vírgula')
   .option('--updated <date>', 'YYYY-MM-DD')
   .action((opts) => cmdSave(opts));
 

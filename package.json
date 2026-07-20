@@ -1,6 +1,6 @@
 {
   "name": "@luismartinsoss/constellation",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Contexto de projeto para agentes de IA — estrelas versionadas, índice barato, grafo estelar navegável",
   "type": "module",
   "bin": { "constellation": "dist/index.js" },

@@ -67,6 +67,8 @@ function parseStar(raw) {
     summary: String(data.summary ?? ""),
     tags: Array.isArray(data.tags) ? data.tags.map(String) : [],
     links: Array.isArray(data.links) ? data.links.map(String) : [],
+    files: Array.isArray(data.files) ? data.files.map(String) : [],
+    refs: Array.isArray(data.refs) ? data.refs.map(String) : [],
     // js-yaml parseia `updated: 2026-07-17` (sem aspas) como Date; normalizar p/ ISO YYYY-MM-DD.
     updated: data.updated instanceof Date ? data.updated.toISOString().slice(0, 10) : String(data.updated ?? ""),
     body: content.trim()
@@ -81,6 +83,8 @@ function serializeStar(star) {
     summary: star.summary,
     tags: star.tags,
     links: star.links,
+    files: star.files,
+    refs: star.refs,
     updated: star.updated
   };
   return matter.stringify(`${star.body}
@@ -180,7 +184,9 @@ function buildGraph(project, stars) {
       constellation: s.constellation,
       title: s.title,
       summary: s.summary,
-      tags: s.tags
+      tags: s.tags,
+      files: s.files,
+      refs: s.refs
     })),
     edges
   };
@@ -206,7 +212,7 @@ function queryStars(stars, term, filter = {}) {
   const q = term.toLowerCase();
   return stars.filter((s) => {
     if (!matchesFilter(s, filter)) return false;
-    const hay = [s.id, s.title, s.summary, s.body, s.tags.join(" ")].join("\n").toLowerCase();
+    const hay = [s.id, s.title, s.summary, s.body, s.tags.join(" "), s.files.join(" "), s.refs.join(" ")].join("\n").toLowerCase();
     return hay.includes(q);
   });
 }
@@ -263,6 +269,8 @@ async function cmdSave(opts) {
     constellation: opts.constellation ?? "geral",
     tags: splitList(opts.tags),
     links: splitList(opts.links),
+    files: splitList(opts.files),
+    refs: splitList(opts.refs),
     updated: opts.updated ?? today(),
     body: body.trim()
   };
@@ -282,6 +290,8 @@ function cmdSync() {
 function printStar(s) {
   console.log(`# ${s.title}  [${s.id}]`);
   console.log(`type: ${s.type} \xB7 constellation: ${s.constellation} \xB7 tags: ${s.tags.join(", ")}`);
+  if (s.files.length) console.log(`arquivos: ${s.files.join(", ")}`);
+  if (s.refs.length) console.log(`refs: ${s.refs.join(", ")}`);
   console.log("");
   console.log(s.body);
 }
@@ -400,7 +410,7 @@ async function cmdView(port) {
 var program = new Command();
 program.name("constellation").description("Contexto de projeto para agentes de IA").version("0.1.0");
 program.command("init").argument("<project>", "nome do projeto").action(cmdInit);
-program.command("save").description("cria/atualiza uma estrela (corpo markdown via stdin)").requiredOption("--id <id>").requiredOption("--type <type>", "code-map | decision | gotcha | doc").requiredOption("--title <title>").requiredOption("--summary <summary>", "uma linha").option("--constellation <cluster>").option("--tags <list>", "separadas por v\xEDrgula").option("--links <list>", "ids separados por v\xEDrgula").option("--updated <date>", "YYYY-MM-DD").action((opts) => cmdSave(opts));
+program.command("save").description("cria/atualiza uma estrela (corpo markdown via stdin)").requiredOption("--id <id>").requiredOption("--type <type>", "code-map | decision | gotcha | doc").requiredOption("--title <title>").requiredOption("--summary <summary>", "uma linha").option("--constellation <cluster>").option("--tags <list>", "separadas por v\xEDrgula").option("--links <list>", "ids separados por v\xEDrgula").option("--files <list>", "arquivos/caminhos relevantes, separados por v\xEDrgula").option("--refs <list>", "refer\xEAncias (links/tickets), separadas por v\xEDrgula").option("--updated <date>", "YYYY-MM-DD").action((opts) => cmdSave(opts));
 program.command("open").description("imprime o \xEDndice barato").action(cmdOpen);
 program.command("sync").description("regenera index.md e constellation.json").action(cmdSync);
 program.command("show").argument("<id>").option("--links", "incluir estrelas vizinhas").action((id, opts) => cmdShow(id, Boolean(opts.links)));

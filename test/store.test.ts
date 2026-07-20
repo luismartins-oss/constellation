@@ -10,7 +10,7 @@ let tmp: string;
 function star(over: Partial<Star> = {}): Star {
   return {
     id: 'estrela-a', type: 'decision', constellation: 'geral',
-    title: 'A', summary: 'resumo A', tags: ['x'], links: [],
+    title: 'A', summary: 'resumo A', tags: ['x'], links: [], files: [], refs: [],
     updated: '2026-07-17', body: 'corpo A', ...over,
   };
 }

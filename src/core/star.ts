@@ -38,6 +38,8 @@ export function parseStar(raw: string): Star {
     summary: String(data.summary ?? ''),
     tags: Array.isArray(data.tags) ? data.tags.map(String) : [],
     links: Array.isArray(data.links) ? data.links.map(String) : [],
+    files: Array.isArray(data.files) ? data.files.map(String) : [],
+    refs: Array.isArray(data.refs) ? data.refs.map(String) : [],
     // js-yaml parseia `updated: 2026-07-17` (sem aspas) como Date; normalizar p/ ISO YYYY-MM-DD.
     updated: data.updated instanceof Date ? data.updated.toISOString().slice(0, 10) : String(data.updated ?? ''),
     body: content.trim(),
@@ -53,6 +55,8 @@ export function serializeStar(star: Star): string {
     summary: star.summary,
     tags: star.tags,
     links: star.links,
+    files: star.files,
+    refs: star.refs,
     updated: star.updated,
   };
   return matter.stringify(`${star.body}\n`, fm);

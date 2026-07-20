@@ -5,7 +5,7 @@ import type { Star } from '../src/core/types';
 function star(over: Partial<Star>): Star {
   return {
     id: 'x', type: 'decision', constellation: 'geral',
-    title: 'X', summary: '', tags: [], links: [], updated: '', body: '', ...over,
+    title: 'X', summary: '', tags: [], links: [], files: [], refs: [], updated: '', body: '', ...over,
   };
 }
 
@@ -29,5 +29,13 @@ describe('query', () => {
 
   it('listStars sem filtro devolve tudo', () => {
     expect(listStars(STARS)).toHaveLength(2);
+  });
+
+  it('queryStars acha por caminho de arquivo (files)', () => {
+    const stars = [
+      star({ id: 'a', files: ['app/finance/aportes/repo.py'] }),
+      star({ id: 'b', files: ['app/risk/engine.py'] }),
+    ];
+    expect(queryStars(stars, 'aportes/repo').map((s) => s.id)).toEqual(['a']);
   });
 });

@@ -47,7 +47,7 @@ export function cmdInit(project: string): void {
 
 export async function cmdSave(opts: {
   id: string; type: StarType; title: string; summary: string;
-  constellation?: string; tags?: string; links?: string; updated?: string;
+  constellation?: string; tags?: string; links?: string; files?: string; refs?: string; updated?: string;
 }): Promise<void> {
   if (!ID_RE.test(opts.id)) {
     console.error(`id inválido: "${opts.id}" — use apenas minúsculas, números e hífens (ex: backend-aportes).`);
@@ -63,6 +63,7 @@ export async function cmdSave(opts: {
     id: opts.id, type: opts.type, title: opts.title, summary: opts.summary,
     constellation: opts.constellation ?? 'geral',
     tags: splitList(opts.tags), links: splitList(opts.links),
+    files: splitList(opts.files), refs: splitList(opts.refs),
     updated: opts.updated ?? today(),
     body: body.trim(),
   };
@@ -85,6 +86,8 @@ export function cmdSync(): void {
 function printStar(s: Star): void {
   console.log(`# ${s.title}  [${s.id}]`);
   console.log(`type: ${s.type} · constellation: ${s.constellation} · tags: ${s.tags.join(', ')}`);
+  if (s.files.length) console.log(`arquivos: ${s.files.join(', ')}`);
+  if (s.refs.length) console.log(`refs: ${s.refs.join(', ')}`);
   console.log('');
   console.log(s.body);
 }

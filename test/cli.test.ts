@@ -67,4 +67,18 @@ describe('cli leitura', () => {
     run(['init', 'proj']);
     expect(() => run(['save', '--id', 'ok', '--type', 'banana', '--title', 'T', '--summary', 's'], 'x')).toThrow();
   });
+
+  it('save guarda files/refs; show exibe e query acha por arquivo', () => {
+    run(['init', 'proj']);
+    run(['save', '--id', 'dossie', '--type', 'gotcha', '--title', 'Dossiê',
+         '--summary', 'com detalhe', '--constellation', 'db',
+         '--files', 'app/finance/aportes/repo.py, app/db/helpers.py',
+         '--refs', 'ticket-42, https://x/y'],
+        '## Contexto\ndetalhe do corpo');
+    const shown = run(['show', 'dossie']);
+    expect(shown).toContain('app/finance/aportes/repo.py');
+    expect(shown).toContain('ticket-42');
+    expect(shown).toContain('## Contexto');
+    expect(run(['query', 'aportes/repo'])).toContain('[dossie]');
+  });
 });

@@ -35,6 +35,7 @@ export function buildGraph(project: string, stars: Star[]): ConstellationGraph {
     nodes: stars.map((s) => ({
       id: s.id, type: s.type, constellation: s.constellation,
       title: s.title, summary: s.summary, tags: s.tags,
+      files: s.files, refs: s.refs,
     })),
     edges,
   };

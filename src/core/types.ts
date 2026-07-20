@@ -8,6 +8,8 @@ export interface Star {
   summary: string;
   tags: string[];
   links: string[];
+  files: string[];
+  refs: string[];
   updated: string;
   body: string;
 }
@@ -19,6 +21,8 @@ export interface GraphNode {
   title: string;
   summary: string;
   tags: string[];
+  files: string[];
+  refs: string[];
 }
 
 export interface GraphEdge {

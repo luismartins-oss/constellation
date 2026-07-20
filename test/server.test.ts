@@ -14,7 +14,7 @@ beforeEach(async () => {
   root = initStore(tmp, 'proj');
   const s: Star = {
     id: 'a', type: 'decision', constellation: 'db', title: 'Dec A',
-    summary: 's', tags: [], links: [], updated: '2026-07-17', body: '## Detalhe\ntexto',
+    summary: 's', tags: [], links: [], files: [], refs: [], updated: '2026-07-17', body: '## Detalhe\ntexto',
   };
   writeStar(root, s);
   sync(root);
