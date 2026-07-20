@@ -1,13 +1,20 @@
 #!/usr/bin/env node
+import { readFileSync } from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { Command } from 'commander';
 import { cmdInit, cmdSave, cmdOpen, cmdSync, cmdShow, cmdQuery, cmdList, cmdRm } from './handlers';
 import { cmdView } from './view';
+
+// versão lida do package.json (evita drift entre CLI e o pacote)
+const pkgPath = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'package.json');
+const version = (JSON.parse(readFileSync(pkgPath, 'utf8')) as { version: string }).version;
 
 const program = new Command();
 program
   .name('constellation')
   .description('Contexto de projeto para agentes de IA')
-  .version('0.1.0');
+  .version(version);
 
 program.command('init')
   .argument('<project>', 'nome do projeto')

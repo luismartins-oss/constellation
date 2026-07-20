@@ -1,6 +1,9 @@
 #!/usr/bin/env node
 
 // src/cli/index.ts
+import { readFileSync } from "fs";
+import path4 from "path";
+import { fileURLToPath as fileURLToPath2 } from "url";
 import { Command } from "commander";
 
 // src/cli/handlers.ts
@@ -407,8 +410,10 @@ async function cmdView(port) {
 }
 
 // src/cli/index.ts
+var pkgPath = path4.join(path4.dirname(fileURLToPath2(import.meta.url)), "..", "package.json");
+var version = JSON.parse(readFileSync(pkgPath, "utf8")).version;
 var program = new Command();
-program.name("constellation").description("Contexto de projeto para agentes de IA").version("0.1.0");
+program.name("constellation").description("Contexto de projeto para agentes de IA").version(version);
 program.command("init").argument("<project>", "nome do projeto").action(cmdInit);
 program.command("save").description("cria/atualiza uma estrela (corpo markdown via stdin)").requiredOption("--id <id>").requiredOption("--type <type>", "code-map | decision | gotcha | doc").requiredOption("--title <title>").requiredOption("--summary <summary>", "uma linha").option("--constellation <cluster>").option("--tags <list>", "separadas por v\xEDrgula").option("--links <list>", "ids separados por v\xEDrgula").option("--files <list>", "arquivos/caminhos relevantes, separados por v\xEDrgula").option("--refs <list>", "refer\xEAncias (links/tickets), separadas por v\xEDrgula").option("--updated <date>", "YYYY-MM-DD").action((opts) => cmdSave(opts));
 program.command("open").description("imprime o \xEDndice barato").action(cmdOpen);
